@@ -1,0 +1,8 @@
+{
+  "version": "0.1.0",
+  "requires_binary": "0.1.0",
+  "entries": [
+    { "kind": "command", "source": "commands/new-project.md" },
+    { "kind": "stack", "source": "stacks/java.md" }
+  ]
+}

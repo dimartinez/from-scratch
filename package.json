@@ -1,0 +1,36 @@
+{
+  "name": "from-scratch",
+  "version": "0.1.0",
+  "description": "CLI tool to install and keep updated Claude Code commands and stacks",
+  "type": "module",
+  "bin": {
+    "from-scratch": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/add-shebang.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.9.1",
+    "js-yaml": "^4.1.0",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/semver": "^7.5.8",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

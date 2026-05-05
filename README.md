@@ -134,3 +134,41 @@ Probá: `npm i -g github:dimartinez/from-scratch`.
 ```
 
 `from-scratch` registra en `~/.claude/from-scratch/.state.json` la lista exacta de archivos que instaló. Antes de sobreescribir un archivo en `~/.claude/commands/`, verifica si lo instaló ella misma. Si el archivo existe pero no fue instalado por la CLI, avisa y no pisa.
+
+## Desarrollo de la CLI
+
+Esta sección es para quien clone el repo para modificar el código de la CLI. Si solo querés usar `from-scratch`, alcanza con la sección de [Instalación](#instalación).
+
+### Setup inicial
+
+```bash
+git clone https://github.com/dimartinez/from-scratch.git
+cd from-scratch
+npm install
+npm run setup
+```
+
+`npm run setup` activa los git hooks del repo (configura `core.hooksPath` apuntando a `.githooks/`). Solo hace falta correrlo una vez por copia local del repo.
+
+### Flujo de trabajo
+
+Editás archivos en `src/`, hacés commit normal. El hook de pre-commit detecta los cambios en `src/`, corre `npm run build` y agrega `dist/` al commit automáticamente — no hay que acordarse de buildar.
+
+Si el build falla (errores de TypeScript), el commit se aborta y ves el error en pantalla.
+
+Comandos útiles durante el desarrollo:
+
+| Comando | Para qué |
+|---------|----------|
+| `npm run dev -- <args>` | Correr la CLI sin compilar (vía `tsx`) |
+| `npm run build` | Compilar manualmente a `dist/` |
+| `npm test` | Correr tests con vitest |
+| `npm run typecheck` | Verificar tipos sin emitir archivos |
+
+### ¿Por qué `dist/` está en el repo?
+
+Esta CLI se distribuye via `npm i -g github:dimartinez/from-scratch`, no se publica al registro de npm. Cuando npm instala desde GitHub, espera encontrar el código listo para ejecutar — si tuviera que compilarlo en la máquina del usuario, dependeríamos de que `tsc` y las devDependencies estén disponibles en el momento exacto del install, lo cual es frágil.
+
+Commitear `dist/` elimina esa fricción: el usuario clona, npm enlaza el binario, listo. El precio es que `dist/` aparece en los diffs de los PRs. El pre-commit hook (sección anterior) garantiza que `dist/` siempre esté sincronizado con `src/` sin esfuerzo manual.
+
+**No edites `dist/` a mano** — se sobrescribe en cada build.

@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+import { execSync } from 'node:child_process';
+
+const staged = execSync('git diff --cached --name-only', { encoding: 'utf8' })
+  .split('\n')
+  .filter(Boolean);
+
+const triggersBuild = staged.some(
+  (file) => file.startsWith('src/') || file === 'tsconfig.json' || file === 'package.json'
+);
+
+if (!triggersBuild) {
+  process.exit(0);
+}
+
+console.log('[from-scratch] cambios en src/ detectados — recompilando dist/...');
+
+try {
+  execSync('npm run build', { stdio: 'inherit' });
+  execSync('git add dist/', { stdio: 'inherit' });
+  console.log('[from-scratch] dist/ actualizado y stageado.');
+} catch {
+  console.error('[from-scratch] build falló — commit abortado.');
+  process.exit(1);
+}

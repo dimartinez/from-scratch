@@ -4,29 +4,55 @@ CLI que instala y mantiene actualizado el catálogo de comandos y stacks de Clau
 
 ## ¿Qué hace?
 
-`from-scratch` copia archivos desde este repo a tu directorio `~/.claude/`, dejando disponibles comandos (`/new-project` y más en el futuro) para usarlos dentro de Claude Code.
+`from-scratch` copia archivos desde este repo a tu directorio `~/.claude/`, dejando disponibles comandos (`/new-project`) para usarlos dentro de Claude Code.
 
-Separación de responsabilidades:
 - **La CLI** descarga archivos y los coloca en el lugar correcto.
 - **Los comandos de Claude Code** (archivos `.md` en `~/.claude/commands/`) contienen la inteligencia de scaffolding — Claude los lee y razona sobre ellos.
 
 ## Instalación
 
+Antes de instalar, necesitás tener disponible en tu sistema:
+- `git`
+- `python3` >= 3.8
+- `bash`
+
 ```bash
-npm i -g github:dimartinez/from-scratch
+curl -fsSL https://raw.githubusercontent.com/dimartinez/from-scratch/main/install.sh | bash
 ```
 
-Requiere Node.js >= 18.
+El script clona el repo en `~/.from-scratch/` e instala un wrapper en `~/.local/bin/from-scratch`.
+
+Si `~/.local/bin` no está en tu `PATH`, el script te avisa y te muestra el comando para agregarlo:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+
+Verificá que la instalación funcionó:
+
+```bash
+from-scratch --help
+```
+
+### Migración desde la versión npm
+
+Si tenías `from-scratch` instalado con `npm install -g`, desinstalala primero:
+
+```bash
+npm uninstall -g from-scratch
+```
+
+Después corrés el `curl` de arriba normalmente.
 
 ## Uso
 
-### Primera instalación
+### Primera instalación del catálogo
 
 ```bash
 from-scratch init
 ```
 
-Descarga el catálogo, te muestra qué va a instalar, y pide confirmación antes de tocar cualquier archivo.
+Muestra qué archivos va a instalar y pide confirmación antes de tocar cualquier archivo.
 
 Tras la instalación, **reiniciá Claude Code** para que reconozca los comandos nuevos.
 
@@ -36,9 +62,12 @@ Tras la instalación, **reiniciá Claude Code** para que reconozca los comandos 
 from-scratch update
 ```
 
-Compara el catálogo remoto con tu copia local, muestra los cambios, y aplica solo lo que confirmás.
+Hace `git pull` en `~/.from-scratch/`, compara el catálogo con tu copia local, muestra los cambios, y aplica solo lo que confirmás.
 
-Si hay conflicto con un archivo que no instaló la CLI, te avisa y no lo pisa sin `--force`.
+Comportamiento ante archivos con cambios locales:
+
+- Archivos que **vos modificaste** después de que la CLI los instaló: la CLI los muestra en el listado con `!` pero los omite sin `--force`.
+- Archivos que **no instaló la CLI** (existían antes): la CLI los muestra con `!` y no los pisa sin `--force`.
 
 ### Forzar sobreescritura
 
@@ -47,7 +76,7 @@ from-scratch init --force
 from-scratch update --force
 ```
 
-Sobreescribe archivos existentes con conflicto. Siempre hace backup (`<archivo>.bak.<timestamp>`) antes de pisar.
+Sobreescribe archivos en conflicto. Siempre hace backup (`<archivo>.bak.<timestamp>`) antes de pisar.
 
 ### Ayuda
 
@@ -108,32 +137,51 @@ Los archivos en `catalog/commands/<nombre>.md` siguen el formato estándar de Cl
 - Frontmatter YAML con al menos el campo `description` (línea visible en el menú de `/`)
 - Cuerpo markdown con el prompt para Claude (rol + objetivo + restricciones)
 
-## Política de versionado y handshake
-
-Usamos **semver**. El archivo `catalog/catalog.json` declara `requires_binary` con la versión mínima del binario requerida.
-
-Al ejecutarse, la CLI lee ese campo y se planta si su versión es menor:
+## Cómo funciona internamente
 
 ```
-Tu binario from-scratch vX.Y es más viejo que lo que el catálogo necesita (>= vZ.W).
-Probá: `npm i -g github:dimartinez/from-scratch`.
-```
-
-**Cuando hacer un bump de `requires_binary`:** solo cuando el formato del catálogo o el comportamiento de la CLI cambia de manera no retrocompatible. Cambios puramente en contenido de comandos o stacks no requieren bump.
-
-## Cómo funciona `~/.claude/`
-
-```
+~/.from-scratch/          <- clone del repo (desde donde corre la CLI)
+~/.local/bin/from-scratch <- wrapper bash
 ~/.claude/
   commands/
-    new-project.md    ← instalado por from-scratch (registrado en state)
+    new-project.md    <- instalado por from-scratch (registrado en state)
   from-scratch/
     stacks/
-      java.md          ← instalado por from-scratch
-    .state.json        ← metadata interna (no editar a mano)
+      java.md          <- instalado por from-scratch
+    .state.json        <- metadata interna (no editar a mano)
 ```
 
 `from-scratch` registra en `~/.claude/from-scratch/.state.json` la lista exacta de archivos que instaló. Antes de sobreescribir un archivo en `~/.claude/commands/`, verifica si lo instaló ella misma. Si el archivo existe pero no fue instalado por la CLI, avisa y no pisa.
+
+## Problemas frecuentes
+
+**`from-scratch: command not found` después de instalar**
+
+`~/.local/bin` no está en tu `PATH`. Agregalo:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+
+**`from-scratch init` reporta archivos en conflicto (`!`) y no instala**
+
+Hay archivos en `~/.claude/commands/` que no instaló la CLI. Revisalos manualmente y, si querés que la CLI los pise haciendo backup, usá `--force`:
+
+```bash
+from-scratch init --force
+```
+
+**`from-scratch update` omite archivos que vos modificaste**
+
+La CLI detectó que editaste esos archivos después de instalarlos y los saltea para no pisar tus cambios. Si querés actualizar igual (con backup), usá `--force`:
+
+```bash
+from-scratch update --force
+```
+
+**Los comandos no aparecen en Claude Code después de `init`**
+
+Reiniciá Claude Code. Los slash commands se cargan al arrancar; no se detectan en caliente.
 
 ## Desarrollo de la CLI
 
@@ -144,31 +192,18 @@ Esta sección es para quien clone el repo para modificar el código de la CLI. S
 ```bash
 git clone https://github.com/dimartinez/from-scratch.git
 cd from-scratch
-npm install
-npm run setup
+python3 -m venv .venv
+.venv/bin/pip install pytest
 ```
-
-`npm run setup` activa los git hooks del repo (configura `core.hooksPath` apuntando a `.githooks/`). Solo hace falta correrlo una vez por copia local del repo.
 
 ### Flujo de trabajo
 
-Editás archivos en `src/`, hacés commit normal. El hook de pre-commit detecta los cambios en `src/`, corre `npm run build` y agrega `dist/` al commit automáticamente — no hay que acordarse de buildar.
-
-Si el build falla (errores de TypeScript), el commit se aborta y ves el error en pantalla.
+Editás archivos en `src/` directamente — no hay compilación. Los cambios son efectivos de inmediato.
 
 Comandos útiles durante el desarrollo:
 
 | Comando | Para qué |
 |---------|----------|
-| `npm run dev -- <args>` | Correr la CLI sin compilar (vía `tsx`) |
-| `npm run build` | Compilar manualmente a `dist/` |
-| `npm test` | Correr tests con vitest |
-| `npm run typecheck` | Verificar tipos sin emitir archivos |
-
-### ¿Por qué `dist/` está en el repo?
-
-Esta CLI se distribuye via `npm i -g github:dimartinez/from-scratch`, no se publica al registro de npm. Cuando npm instala desde GitHub, espera encontrar el código listo para ejecutar — si tuviera que compilarlo en la máquina del usuario, dependeríamos de que `tsc` y las devDependencies estén disponibles en el momento exacto del install, lo cual es frágil.
-
-Commitear `dist/` elimina esa fricción: el usuario clona, npm enlaza el binario, listo. El precio es que `dist/` aparece en los diffs de los PRs. El pre-commit hook (sección anterior) garantiza que `dist/` siempre esté sincronizado con `src/` sin esfuerzo manual.
-
-**No edites `dist/` a mano** — se sobrescribe en cada build.
+| `python3 -m pytest` | Correr todos los tests |
+| `python3 -m pytest tests/catalog/` | Correr tests de un módulo |
+| `PYTHONPATH=. python3 src/cli.py --help` | Probar la CLI directamente |

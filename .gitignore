@@ -7,8 +7,11 @@ package-lock.json
 pnpm-lock.yaml
 
 # Python
+.venv/
 __pycache__/
+*.pyc
 *.py[cod]
+.pytest_cache/
 *$py.class
 *.so
 .Python
@@ -75,8 +78,6 @@ coverage/
 .nyc_output/
 
 # Build output
-# dist/ is intentionally tracked — this CLI is distributed via `npm i github:...`,
-# so the compiled output must be in the repo for installs to work without a build step.
 build/
 out/
 *.tsbuildinfo

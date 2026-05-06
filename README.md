@@ -78,12 +78,21 @@ from-scratch update --force
 
 Sobreescribe archivos en conflicto. Siempre hace backup (`<archivo>.bak.<timestamp>`) antes de pisar.
 
+### Desinstalar
+
+```bash
+from-scratch uninstall
+```
+
+Elimina todos los archivos que la CLI instaló en `~/.claude/`, borra el directorio `~/.from-scratch/` y el wrapper `~/.local/bin/from-scratch`. Pide confirmación antes de borrar cualquier cosa.
+
 ### Ayuda
 
 ```bash
 from-scratch --help
 from-scratch init --help
 from-scratch update --help
+from-scratch uninstall --help
 ```
 
 ## Comandos incluidos
@@ -180,6 +189,15 @@ La CLI detectó que editaste esos archivos después de instalarlos y los saltea 
 
 ```bash
 from-scratch update --force
+```
+
+**`from-scratch uninstall` falla con "permiso denegado"**
+
+Alguno de los archivos o directorios no puede borrarse con tu usuario. La CLI te muestra el comando exacto para cada elemento; típicamente:
+
+```bash
+sudo rm -rf ~/.from-scratch
+sudo rm ~/.local/bin/from-scratch
 ```
 
 **Los comandos no aparecen en Claude Code después de `init`**

@@ -57,6 +57,8 @@ def run_update(
 
     # Check if everything is already up to date
     if not diff["added"] and not diff["modified"] and not diff["user_modified"] and not diff["unowned_conflict"] and not diff["removed"]:
+        if src_changed:
+            print("-> El código de la CLI fue actualizado. La próxima ejecución usará la versión nueva.", file=out)
         last_sync = state.get("last_sync_completed_at", "") if state else ""
         print_hint("update_no_changes", out=out, last_sync_at=last_sync)
         return 0

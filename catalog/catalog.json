@@ -2,6 +2,7 @@
   "version": "0.1.0",
   "entries": [
     { "kind": "command", "source": "commands/new-project.md" },
+    { "kind": "command", "source": "commands/from-scratch/sync-skills.md" },
     { "kind": "stack", "source": "stacks/java.md" }
   ]
 }

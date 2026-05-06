@@ -2,22 +2,41 @@
 
 ### Requirement: Instalación global desde el repo de GitHub
 
-La CLI `from-scratch` SHALL ser instalable globalmente con `npm i -g github:dimartinez/from-scratch`, sin necesidad de publicar en la registry pública de npm.
+La CLI `from-scratch` SHALL ser instalable mediante un instalador `curl | bash` que clona el repositorio y deja un wrapper ejecutable en el PATH del usuario, sin necesidad de Node.js, npm, ni publicación en ninguna registry de paquetes.
 
-#### Scenario: Instalación inicial desde el repo
+#### Scenario: Instalación inicial en una máquina limpia
 
-- **WHEN** un usuario con Node.js instalado ejecuta `npm i -g github:dimartinez/from-scratch`
-- **THEN** el binario `from-scratch` queda disponible globalmente en su PATH y puede invocarse desde cualquier directorio.
+- **WHEN** un usuario con `git`, `python3` (>= 3.8) y `bash` ejecuta `curl -fsSL https://raw.githubusercontent.com/dimartinez/from-scratch/main/install.sh | bash`
+- **THEN** el script clona el repo en `~/.from-scratch/`, escribe un wrapper ejecutable en `~/.local/bin/from-scratch` que delega a `python3 ~/.from-scratch/src/cli.py`, y reporta el path donde dejó el binario.
 
-#### Scenario: Actualización del binario
+#### Scenario: Re-instalación sobre clone existente
 
-- **WHEN** el usuario re-ejecuta `npm i -g github:dimartinez/from-scratch` con una nueva versión publicada en `main`
-- **THEN** la versión local del binario se reemplaza por la nueva sin pasos adicionales.
+- **WHEN** el usuario re-ejecuta el comando `curl | bash` y `~/.from-scratch/` ya existe como clone limpio
+- **THEN** el script ejecuta `git pull --ff-only` en ese directorio, re-escribe el wrapper si hace falta, y reporta el SHA actualizado.
 
-#### Scenario: Pin a versión específica
+#### Scenario: Falta una dependencia básica
 
-- **WHEN** el usuario ejecuta `npm i -g github:dimartinez/from-scratch#v1.0.0`
-- **THEN** se instala la versión correspondiente al tag `v1.0.0` y permanece pineada hasta el próximo install.
+- **WHEN** el usuario ejecuta el comando `curl | bash` y no tiene `git` o `python3` instalados, o `python3` reporta una versión menor a 3.8
+- **THEN** el script falla con código distinto de cero, imprime el binario faltante o la versión encontrada, y NO modifica ningún archivo del sistema.
+
+#### Scenario: `~/.local/bin` no está en PATH
+
+- **WHEN** el usuario completa el install y `~/.local/bin` no está en la variable `PATH` de su shell actual
+- **THEN** el script imprime una instrucción explícita para agregarlo (e.g., `export PATH="$HOME/.local/bin:$PATH"` y dónde ponerlo), pero igualmente deja el wrapper escrito.
+
+### Requirement: Detección de instalación previa vía npm
+
+`install.sh` SHALL detectar la presencia de una instalación previa de `from-scratch` realizada vía `npm i -g` antes de proceder, y SHALL pedir al usuario que la desinstale manualmente — sin ejecutar `npm uninstall` automáticamente.
+
+#### Scenario: Instalación previa detectada
+
+- **WHEN** `install.sh` ejecuta `npm root -g 2>/dev/null` y el directorio `from-scratch` existe dentro de esa ruta
+- **THEN** el script imprime un mensaje explícito ("Detecté una instalación previa vía npm. Antes de continuar ejecutá `npm uninstall -g from-scratch` y volvé a correr este install"), sale con código distinto de cero, y NO escribe ni modifica ningún archivo.
+
+#### Scenario: Sin instalación previa npm
+
+- **WHEN** `install.sh` ejecuta `npm root -g 2>/dev/null` y el directorio `from-scratch` no existe ahí (o `npm` no está disponible)
+- **THEN** el script continúa con la instalación normal sin mencionar npm.
 
 ### Requirement: Subcomando `init`
 
@@ -40,50 +59,46 @@ La CLI `from-scratch` SHALL ser instalable globalmente con `npm i -g github:dima
 
 ### Requirement: Subcomando `update`
 
-`from-scratch update` SHALL re-sincronizar el catálogo local con el del repo, mostrando los cambios al usuario antes de aplicarlos.
+`from-scratch update` SHALL re-sincronizar tanto el código de la CLI como el catálogo local con el del repo, ejecutando `git pull --ff-only` en `~/.from-scratch/` antes de aplicar cambios al directorio `~/.claude/`.
 
 #### Scenario: Actualización con cambios disponibles
 
-- **WHEN** el usuario ejecuta `from-scratch update` y el repo tiene archivos nuevos o modificados respecto a la copia local
-- **THEN** la CLI lista los archivos agregados (`+`), modificados (`~`) y sin cambios (`=`), pide confirmación, y aplica los cambios solo si el usuario confirma.
+- **WHEN** el usuario ejecuta `from-scratch update` y el repo remoto tiene commits nuevos respecto al clone local
+- **THEN** la CLI ejecuta `git pull --ff-only`, después lista los archivos del catálogo agregados (`+`), modificados (`~`) y sin cambios (`=`), pide confirmación, y aplica los cambios al directorio `~/.claude/` solo si el usuario confirma.
 
 #### Scenario: Update sin cambios
 
-- **WHEN** el usuario ejecuta `from-scratch update` y el repo no tiene cambios respecto a la copia local
-- **THEN** la CLI informa "todo está al día" y sale sin tocar archivos.
+- **WHEN** el usuario ejecuta `from-scratch update` y ni el código ni el catálogo tienen cambios remotos
+- **THEN** la CLI ejecuta `git pull --ff-only` (que no trae nada), informa "todo está al día" y sale sin tocar archivos en `~/.claude/`.
 
 #### Scenario: Cancelación durante update
 
-- **WHEN** la CLI muestra los cambios y el usuario responde "no" a la confirmación
-- **THEN** ningún archivo es modificado en disco.
+- **WHEN** la CLI muestra los cambios del catálogo y el usuario responde "no" a la confirmación
+- **THEN** ningún archivo en `~/.claude/` es modificado. El `git pull` previo permanece (el clone queda actualizado), pero esto no afecta la instalación visible.
+
+#### Scenario: El clone local tiene cambios sin commitear
+
+- **WHEN** el usuario ejecuta `from-scratch update` y `~/.from-scratch/` tiene modificaciones locales que harían fallar `git pull --ff-only`
+- **THEN** la CLI captura el error de git, imprime un mensaje específico ("tu clone local en `~/.from-scratch` tiene cambios; revisalo con `git status` o re-cloná"), y sale sin tocar `~/.claude/`.
+
+#### Scenario: El pull trajo cambios en el código de la CLI
+
+- **WHEN** el `git pull --ff-only` actualiza archivos en `src/` además del catálogo
+- **THEN** la CLI completa la sincronización con el código viejo (el que está en memoria) e imprime al final un aviso explícito: "Se actualizó el código de la CLI; la próxima ejecución usará la versión nueva".
 
 ### Requirement: Feedback visual moderno y consistente
 
-La CLI SHALL proveer feedback visual usando una librería estándar de la industria (`@clack/prompts` o equivalente), con una estética consistente entre subcomandos.
+La CLI SHALL proveer feedback visual coherente entre subcomandos: spinners en operaciones que toman tiempo, prompts interactivos para confirmaciones, y resumen de cierre tras cada operación. La implementación usa primitivas de la stdlib de Python (sin dependencias externas).
 
-#### Scenario: Spinners durante operaciones de red
+#### Scenario: Indicador durante operaciones lentas
 
-- **WHEN** la CLI está descargando archivos del repo
-- **THEN** muestra un spinner con un texto descriptivo de la operación en curso.
+- **WHEN** la CLI está ejecutando `git pull` o copiando muchos archivos
+- **THEN** muestra un indicador (spinner o equivalente textual) con un mensaje descriptivo de la operación en curso.
 
 #### Scenario: Resumen final tras operación exitosa
 
 - **WHEN** un subcomando termina su trabajo correctamente
-- **THEN** la CLI muestra un mensaje de cierre que indica qué se hizo y, cuando aplica, qué tiene que hacer el usuario a continuación (por ejemplo, "Reiniciá Claude Code").
-
-### Requirement: Handshake de versión con el catálogo
-
-La CLI SHALL leer la versión mínima de binario declarada por el catálogo y SHALL detenerse si su propia versión es menor a esa, mostrando instrucciones explícitas para actualizar.
-
-#### Scenario: Catálogo exige versión mayor a la instalada
-
-- **WHEN** el binario v1.2 se ejecuta y el catálogo declara `requires_binary >= v2.0`
-- **THEN** la CLI imprime un mensaje que incluye la versión actual, la versión requerida, y el comando exacto para actualizar (`npm i -g github:dimartinez/from-scratch`), y sale sin aplicar cambios.
-
-#### Scenario: Versiones compatibles
-
-- **WHEN** la versión del binario es mayor o igual a la versión mínima declarada por el catálogo
-- **THEN** la CLI procede normalmente.
+- **THEN** la CLI imprime un mensaje de cierre que indica qué se hizo (archivos tocados, commits aplicados) y, cuando aplica, qué tiene que hacer el usuario a continuación (por ejemplo, "Reiniciá Claude Code").
 
 ### Requirement: Confirmación explícita antes de modificar archivos
 

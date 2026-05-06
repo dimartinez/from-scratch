@@ -22,6 +22,16 @@ A partir de acá, el resto del flujo trabaja sobre la carpeta `openspec/changes/
 
 ## El ciclo
 
+Antes de arrancar el ciclo, abrí un TodoWrite con los siguientes ítems para que el usuario tenga visibilidad del avance y vos no te olvides de ningún paso:
+
+1. UX reviewer
+2. Agentic-coding reviewer
+3. TDD reviewer
+4. Validación final (`openspec validate <nombre-resuelto> --strict`)
+5. Reporte unificado al usuario
+
+Marcá cada ítem como `in_progress` antes de empezarlo y como `completed` apenas termina (no batchees completions). Si un sub-agente no aplica cambios, igualmente cerrá su ítem como completado — el ítem refleja "el reviewer corrió", no "el reviewer encontró algo".
+
 Vas a invocar tres sub-agentes en este orden, uno después del otro (no en paralelo — cada uno depende del estado que dejó el anterior):
 
 ### 1. `openspec-ux-reviewer`

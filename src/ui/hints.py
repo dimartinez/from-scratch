@@ -31,6 +31,21 @@ def _get_hint(name: str, **kwargs) -> str:
     if name == "install_success":
         return "Listo. Probá `from-scratch init` para instalar el catálogo en ~/.claude/"
 
+    if name == "already_uninstalled":
+        return (
+            "from-scratch no está instalado en este equipo.\n"
+            "Para instalarlo: from-scratch init"
+        )
+
+    if name == "uninstall_success":
+        return (
+            "from-scratch desinstalado correctamente.\n"
+            "Para volver a instalarlo: from-scratch init"
+        )
+
+    if name == "uninstall_cancelled":
+        return "Desinstalación cancelada."
+
     return ""
 
 

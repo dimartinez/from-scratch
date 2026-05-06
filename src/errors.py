@@ -53,6 +53,16 @@ class StateCorruptError(FromScratchError):
         super().__init__(message)
 
 
+class UninstallPermissionError(FromScratchError):
+    code = "UNINSTALL_PERMISSION_ERROR"
+
+    def __init__(self, path: str = ""):
+        self.path = path
+        message = f"No se pudo eliminar '{path}': permiso denegado" if path else "Permiso denegado durante la desinstalación"
+        super().__init__(message)
+        self.remediation = f"sudo rm {path}"
+
+
 class GitFastForwardError(FromScratchError):
     code = "GIT_FAST_FORWARD_ERROR"
     remediation = (

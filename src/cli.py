@@ -3,7 +3,7 @@ import argparse
 import sys
 
 
-SUBCOMMANDS = ["init", "update"]
+SUBCOMMANDS = ["init", "update", "uninstall"]
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -33,6 +33,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Sobreescribe archivos modificados localmente",
+    )
+
+    subparsers.add_parser(
+        "uninstall",
+        help="Desinstala from-scratch y elimina todos los archivos instalados",
     )
 
     return parser
@@ -96,6 +101,10 @@ def main(args=None):
         if parsed.subcommand == "update":
             from src.commands.update import run_update
             return run_update(force=parsed.force)
+
+        if parsed.subcommand == "uninstall":
+            from src.commands.uninstall import run_uninstall
+            return run_uninstall()
 
         suggestion = _suggest_subcommand(parsed.subcommand)
         msg = f"Subcomando desconocido: '{parsed.subcommand}'"

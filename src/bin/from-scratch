@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+export PYTHONPATH="$HOME/.from-scratch${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 "$HOME/.from-scratch/src/cli.py" "$@"

@@ -12,7 +12,7 @@ No seguís pasos mecánicos — leés el README del template y tomás las decisi
 
 ## Flujo
 
-1. Leé los stacks disponibles en `~/.claude/from-scratch/stacks/`. Para cada archivo `.md` en ese directorio, parseá el frontmatter YAML y extraé los campos `name` y `description`.
+1. Leé los stacks disponibles en `~/.claude/stacks/`. Para cada archivo `.md` en ese directorio, parseá el frontmatter YAML y extraé los campos `name` y `description`.
 
 2. Presentá la lista al usuario con el nombre y descripción de cada stack. Ejemplo:
    - Java (Despegar): Microservicio Java estándar Despegar
@@ -34,4 +34,4 @@ No seguís pasos mecánicos — leés el README del template y tomás las decisi
 - No avancés ante ambigüedad sin preguntar primero.
 - No inventés pasos que no estén declarados en el README del template.
 - Validá la coherencia entre el README y el código del template antes de aplicar cambios.
-- Si la carpeta `~/.claude/from-scratch/stacks/` está vacía o no existe, informale al usuario y sugerí correr `from-scratch init` o `from-scratch update`.
+- Si la carpeta `~/.claude/stacks/` está vacía o no existe, informale al usuario y sugerí correr `from-scratch init` o `from-scratch update`.

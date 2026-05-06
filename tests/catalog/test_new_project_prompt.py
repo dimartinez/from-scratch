@@ -46,11 +46,22 @@ def test_new_project_includes_skills_sync_step():
     assert "skills" in body and ("agent-rules-and-skills" in body or "prompt 1" in body or "01-" in body)
 
 
-def test_new_project_skills_sync_excludes_prompt_3():
+def test_new_project_skills_sync_includes_prompt_3():
     body = get_body(NEW_PROJECT_FILE.read_text()).lower()
-    # The prompt should explicitly say Prompt 3 is excluded in new-project
-    assert "prompt 3" not in body or "no se ejecuta" in body or "excluido" in body or \
-        "solo prompts 1 y 2" in body or "prompts 1+2" in body or "prompts 1 y 2" in body
+    # The prompt MUST execute Prompt 3 so the custom-skills pipeline is wired up from clone.
+    # Output may be minimal for fresh projects, but the plumbing must run.
+    assert "prompt 3" in body, "new-project must execute Prompt 3 (custom skills) — see /from-scratch:sync-skills for the full flow"
+    assert "prompts/03-custom-skills.md" in body, "Pinned URL for Prompt 3 must be visible"
+
+
+def test_new_project_warns_about_thin_custom_skills():
+    body = get_body(NEW_PROJECT_FILE.read_text()).lower()
+    # Since the project just got cloned, custom skills may be thin — the prompt must say so
+    # and point users to /from-scratch:sync-skills for a richer rerun later.
+    assert "básic" in body or "minim" in body or "baja calidad" in body or "poca historia" in body, \
+        "Must warn that Prompt 3 output may be thin on a freshly cloned project"
+    assert "from-scratch:sync-skills" in body, \
+        "Must suggest re-running /from-scratch:sync-skills once there's more code"
 
 
 def test_new_project_skills_sync_after_template_setup():
@@ -104,6 +115,17 @@ def test_new_project_claude_md_uses_html_markers():
     content = NEW_PROJECT_FILE.read_text()
     assert "<!-- AUTO-GENERATED: claude-init-start -->" in content or "AUTO-GENERATED:" in content, \
         "CLAUDE.md section must use HTML markers for future merge support"
+
+
+def test_new_project_claude_md_uses_at_import_for_agents_md():
+    body = get_body(NEW_PROJECT_FILE.read_text())
+    # Generated CLAUDE.md must reference AGENTS.md as `@AGENTS.md` (Claude Code recursive import),
+    # NOT as a markdown link `[AGENTS.md](AGENTS.md)`. Markdown links do not expand the file
+    # contents into the session context; only `@`-imports do.
+    assert "@AGENTS.md" in body, \
+        "CLAUDE.md generation step must instruct using @AGENTS.md import (not a markdown link)"
+    assert "import" in body.lower(), \
+        "Step must explain that @AGENTS.md is an import (so future maintainers don't 'fix' it back to a link)"
 
 
 # ─── Task 3.9 ────────────────────────────────────────────────────────────────

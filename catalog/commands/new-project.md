@@ -23,9 +23,11 @@ template configurado, skills instalados, `AGENTS.md` y `CLAUDE.md` generados, pe
 
 - Prompt 1 (análisis del proyecto): `https://raw.githubusercontent.com/despegar/agent-rules-and-skills/v1.0.0/prompts/01-project-analysis.md`
 - Prompt 2 (sync de skills compartidos): `https://raw.githubusercontent.com/despegar/agent-rules-and-skills/v1.0.0/prompts/02-skills-sync.md`
+- Prompt 3 (generación de skills customizados): `https://raw.githubusercontent.com/despegar/agent-rules-and-skills/v1.0.0/prompts/03-custom-skills.md`
 
-El Prompt 3 no se ejecuta en `/new-project` — el proyecto recién clonado no tiene historia suficiente.
-Para generar skills customizados, corré `/from-scratch:sync-skills` cuando el proyecto tenga código real.
+Los tres prompts se ejecutan en `/new-project` para que la cañería de skills custom quede armada
+desde el primer momento. Como el proyecto recién clonado tiene poca historia, el output del Prompt 3
+puede ser básico — avisalo al usuario y sugerí correr `/from-scratch:sync-skills` cuando haya más código.
 
 ## Flujo
 
@@ -49,13 +51,19 @@ Validá coherencia entre el README, el código y la configuración.
 
 Si el directorio destino ya existe, abortá con error accionable — nunca sobreescribas un proyecto previo.
 
-### Paso 3: Skills sync (Prompts 1+2)
+### Paso 3: Skills sync (Prompts 1+2+3)
 
-El objetivo es que el proyecto tenga `.claude/skills/`, `AGENTS.md` con los skills relevantes.
-Leé y ejecutá el Prompt 1 (análisis) y el Prompt 2 (skills compartidos) desde el ref pinneado.
-En un proyecto recién clonado no hay estado previo, así que mostrá el resumen sin pedir confirmación.
+El objetivo es que el proyecto tenga `.claude/skills/` poblado (incluyendo skills customizados básicos)
+y `AGENTS.md` con los skills relevantes, dejando la cañería custom funcionando desde el clone inicial.
+Leé y ejecutá en orden el Prompt 1 (análisis), el Prompt 2 (skills compartidos) y el Prompt 3
+(skills customizados) desde el ref pinneado. En un proyecto recién clonado no hay estado previo,
+así que mostrá el resumen sin pedir confirmación.
 
-Si el skills sync falla (repo inaccesible, permisos denegados): reportá el error con qué falló,
+El Prompt 3 puede generar skills mínimos por falta de historia de código — está bien.
+Avisá al usuario que el output puede ser básico y sugerí volver a correr `/from-scratch:sync-skills`
+cuando el proyecto tenga más código real.
+
+Si algún prompt falla (repo inaccesible, permisos denegados): reportá el error con qué falló,
 por qué, y qué hacer (ej. "verificá que tu SSH key esté en GitHub y corré `/from-scratch:sync-skills`").
 Continuá con los pasos restantes — no abortes todo el flujo.
 
@@ -67,10 +75,13 @@ las existentes. Si detectás un conflicto (misma key, valor distinto), pedí con
 
 ### Paso 5: Generación de CLAUDE.md
 
-El objetivo es que el proyecto tenga un `CLAUDE.md` que referencia `AGENTS.md` y documenta los
+El objetivo es que el proyecto tenga un `CLAUDE.md` que importe `AGENTS.md` y documente los
 skills instalados. Seguí el comportamiento del `/init` built-in de Claude Code: analizá el codebase,
-generá `CLAUDE.md` con referencia explícita a `AGENTS.md`. Este paso corre después del skills sync
-para que `AGENTS.md` ya exista y pueda ser referenciado.
+generá `CLAUDE.md` con la referencia a `AGENTS.md` escrita como `@AGENTS.md` (import recursivo
+de Claude Code), no como link markdown `[AGENTS.md](AGENTS.md)`. La diferencia es crítica: el
+import expande el contenido del archivo en el contexto de cada sesión; el link es texto inerte
+y no carga nada. Este paso corre después del skills sync para que `AGENTS.md` ya exista y el
+import sea válido.
 
 Envolvé la sección auto-generada con los marcadores
 `<!-- AUTO-GENERATED: claude-init-start -->` / `<!-- AUTO-GENERATED: claude-init-end -->`.

@@ -4,7 +4,7 @@ CLI que instala y mantiene actualizado el catálogo de comandos y stacks de Clau
 
 ## ¿Qué hace?
 
-`from-scratch` copia archivos desde este repo a tu directorio `~/.claude/`, dejando disponibles comandos (`/new-project`) para usarlos dentro de Claude Code.
+`from-scratch` copia archivos desde este repo a tu directorio `~/.claude/`, dejando disponibles comandos (`/new-project`, `/from-scratch:sync-skills`) y los stacks de templates para usarlos dentro de Claude Code.
 
 - **La CLI** descarga archivos y los coloca en el lugar correcto.
 - **Los comandos de Claude Code** (archivos `.md` en `~/.claude/commands/`) contienen la inteligencia de scaffolding — Claude los lee y razona sobre ellos.
@@ -89,6 +89,7 @@ from-scratch update --help
 ## Comandos incluidos
 
 - `/new-project` — Crea un proyecto nuevo desde un template de stack.
+- `/from-scratch:sync-skills` — Re-sincroniza los skills de Claude Code desde el catálogo compartido de Despegar en un proyecto existente.
 
 ## Stacks disponibles
 
@@ -144,11 +145,13 @@ Los archivos en `catalog/commands/<nombre>.md` siguen el formato estándar de Cl
 ~/.local/bin/from-scratch <- wrapper bash
 ~/.claude/
   commands/
-    new-project.md    <- instalado por from-scratch (registrado en state)
+    new-project.md              <- instalado por from-scratch
+    from-scratch/
+      sync-skills.md            <- instalado por from-scratch
+  stacks/
+    java.md                     <- instalado por from-scratch
   from-scratch/
-    stacks/
-      java.md          <- instalado por from-scratch
-    .state.json        <- metadata interna (no editar a mano)
+    .state.json                 <- metadata interna (no editar a mano)
 ```
 
 `from-scratch` registra en `~/.claude/from-scratch/.state.json` la lista exacta de archivos que instaló. Antes de sobreescribir un archivo en `~/.claude/commands/`, verifica si lo instaló ella misma. Si el archivo existe pero no fue instalado por la CLI, avisa y no pisa.

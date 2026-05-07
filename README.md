@@ -133,47 +133,6 @@ from-scratch doctor --help
 |--------|-------------|
 | Java (Despegar) | Microservicio Java estándar Despegar |
 
-## Agregar un stack nuevo
-
-1. Creá un archivo en `catalog/stacks/<nombre>.md` con el siguiente frontmatter:
-
-   ```yaml
-   ---
-   name: Mi Stack
-   description: Descripción corta (max ~80 chars)
-   template_url: github.com/org/mi-template
-   ---
-   ```
-
-2. Actualizá `catalog/catalog.json` agregando la entrada:
-
-   ```json
-   { "kind": "stack", "source": "stacks/<nombre>.md" }
-   ```
-
-3. Los usuarios verán el stack nuevo tras su próximo `from-scratch update`.
-
-No es necesario cambiar código de la CLI para agregar un stack.
-
-## Contrato del archivo de stack
-
-Cada archivo de stack (`catalog/stacks/<id>.md`) debe tener frontmatter YAML con los tres campos requeridos:
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `name` | string | Nombre visible en la lista de stacks |
-| `description` | string | Descripción corta (una línea, ~80 chars) |
-| `template_url` | string | URL del repo Git del template |
-
-El cuerpo markdown (después del frontmatter) es libre y la CLI lo ignora. Puede usarse para notas humanas.
-
-## Contrato de los slash commands instalados
-
-Los archivos en `catalog/commands/<nombre>.md` siguen el formato estándar de Claude Code:
-
-- Frontmatter YAML con al menos el campo `description` (línea visible en el menú de `/`)
-- Cuerpo markdown con el prompt para Claude (rol + objetivo + restricciones)
-
 ## Cómo funciona internamente
 
 ```
@@ -221,7 +180,7 @@ from-scratch update --force
 
 **`from-scratch uninstall` falla con "permiso denegado"**
 
-Alguno de los archivos o directorios no puede borrarse con tu usuario. La CLI te muestra el comando exacto para cada elemento; típicamente:
+Alguno de los archivos o directorios no puede borrarse con tu usuario. La CLI te muestra la ruta exacta de cada elemento que falló — no tenés que adivinarla. Corré `sudo` con esa ruta; por ejemplo:
 
 ```bash
 sudo rm -rf ~/.from-scratch
@@ -246,6 +205,47 @@ Cada línea con `WARN` o `ERROR` incluye el comando exacto para corregirlo.
 
 Esta sección es para quien clone el repo para modificar el código de la CLI. Si solo querés usar `from-scratch`, alcanza con la sección de [Instalación](#instalación).
 
+### Agregar un stack al catálogo
+
+1. Creá un archivo en `catalog/stacks/<nombre>.md` con el siguiente frontmatter:
+
+   ```yaml
+   ---
+   name: Mi Stack
+   description: Descripción corta (max ~80 chars)
+   template_url: github.com/org/mi-template
+   ---
+   ```
+
+2. Actualizá `catalog/catalog.json` agregando la entrada:
+
+   ```json
+   { "kind": "stack", "source": "stacks/<nombre>.md" }
+   ```
+
+3. Los usuarios verán el stack nuevo tras su próximo `from-scratch update`.
+
+No es necesario cambiar código de la CLI para agregar un stack.
+
+#### Contrato del archivo de stack
+
+Cada archivo de stack (`catalog/stacks/<id>.md`) debe tener frontmatter YAML con los tres campos requeridos:
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `name` | string | Nombre visible en la lista de stacks |
+| `description` | string | Descripción corta (una línea, ~80 chars) |
+| `template_url` | string | URL del repo Git del template |
+
+El cuerpo markdown (después del frontmatter) es libre y la CLI lo ignora. Puede usarse para notas internas.
+
+#### Contrato de los slash commands instalados
+
+Los archivos en `catalog/commands/<nombre>.md` siguen el formato estándar de Claude Code:
+
+- Frontmatter YAML con al menos el campo `description` (línea visible en el menú de `/`)
+- Cuerpo markdown con el prompt para Claude (rol + objetivo + restricciones)
+
 ### Setup inicial
 
 ```bash
@@ -265,4 +265,4 @@ Comandos útiles durante el desarrollo:
 |---------|----------|
 | `python3 -m pytest` | Correr todos los tests |
 | `python3 -m pytest tests/catalog/` | Correr tests de un módulo |
-| `PYTHONPATH=. python3 src/cli.py --help` | Probar la CLI directamente |
+| `PYTHONPATH=src python3 -m cli --help` | Probar la CLI directamente |

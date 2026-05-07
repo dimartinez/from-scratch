@@ -32,8 +32,8 @@ puede ser básico — avisalo al usuario y sugerí correr `/from-scratch:sync-sk
 ## Flujo
 
 No seguís pasos mecánicos — leés el README del template y tomás las decisiones correctas.
-Usá un TodoWrite al inicio enumerando los pasos: clone del template, skills sync,
-`.claude/settings.json`, generación de `CLAUDE.md`. Actualizalo a medida que avancés.
+Usá un TodoWrite al inicio enumerando los pasos: clone del template, inicialización de OpenSpec,
+skills sync, `.claude/settings.json`, generación de `CLAUDE.md`. Actualizalo a medida que avancés.
 Anunciá en el chat el inicio y resultado de cada operación larga.
 
 ### Paso 1: Selección del template
@@ -50,6 +50,16 @@ sus instrucciones. Si hay ambigüedad, pausá y preguntá antes de continuar.
 Validá coherencia entre el README, el código y la configuración.
 
 Si el directorio destino ya existe, abortá con error accionable — nunca sobreescribas un proyecto previo.
+
+#### Inicialización de OpenSpec
+
+El objetivo es que el proyecto tenga la estructura `openspec/` para el flujo spec-driven.
+
+Antes de ejecutar `openspec init`, verificá si la carpeta `openspec/` ya existe en el directorio del proyecto. Si existe, marcá el ítem del TodoWrite como completado con el mensaje `"openspec/ ya existe — paso omitido"` y continuá sin ejecutar nada.
+
+Si `openspec/` no existe, verificá que `openspec` esté disponible en el sistema. Si no lo está, reportá el error con las tres piezas: qué falló (`"No se encontró openspec en el sistema"`), por qué (`"El binario no está disponible en el PATH"`), cómo resolver (`npm install -g @fission-ai/openspec`). Marcá el ítem con error y continuá con los pasos restantes sin abortar el flujo.
+
+Si `openspec` está disponible, ejecutá `openspec init` en el directorio del proyecto y capturá el stderr y el código de salida. Si falla, reportá el error con las tres piezas: qué falló (`"Falló openspec init en <ruta>"`), por qué (el stderr del proceso hijo), cómo resolver. Para la remediación: si el directorio no contiene `.git/`, el comando es `git init && openspec init`; si `.git/` existe, el comando es `cd <ruta> && openspec init`. Marcá el ítem con error y continuá con los pasos restantes — no abortes el flujo.
 
 ### Paso 3: Skills sync (Prompts 1+2+3)
 
@@ -100,3 +110,5 @@ Incluí en el mensaje de cierre un bloque educativo sobre `.claude/settings.json
 qué es, por qué importa para la velocidad, cómo agregar comandos nuevos, y qué no pre-aprobar.
 
 Finalizá con el hint: "Para resincronizar skills cuando el proyecto evolucione, usá `/from-scratch:sync-skills`."
+
+Si el paso de OpenSpec completó exitosamente, incluí también: `"OpenSpec inicializado — usá /opsx:propose para proponer tu primer cambio."` Si el paso falló u fue omitido, mencioná el estado e incluí el comando para corregirlo: `cd <ruta-del-proyecto> && openspec init`.

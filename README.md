@@ -4,7 +4,7 @@ CLI que instala y mantiene actualizado el catálogo de comandos y stacks de Clau
 
 ## ¿Qué hace?
 
-`from-scratch` copia archivos desde este repo a tu directorio `~/.claude/`, dejando disponibles comandos (`/new-project`, `/from-scratch:sync-skills`) y los stacks de templates para usarlos dentro de Claude Code.
+`from-scratch` copia archivos desde este repo a tu directorio `~/.claude/`, dejando disponibles comandos (`/new-project`, `/from-scratch:sync-skills`, `/from-scratch:doctor`) y los stacks de templates para usarlos dentro de Claude Code.
 
 - **La CLI** descarga archivos y los coloca en el lugar correcto.
 - **Los comandos de Claude Code** (archivos `.md` en `~/.claude/commands/`) contienen la inteligencia de scaffolding — Claude los lee y razona sobre ellos.
@@ -86,6 +86,31 @@ from-scratch uninstall
 
 Elimina todos los archivos que la CLI instaló en `~/.claude/`, borra el directorio `~/.from-scratch/` y el wrapper `~/.local/bin/from-scratch`. Pide confirmación antes de borrar cualquier cosa.
 
+### Diagnosticar la instalación
+
+```bash
+from-scratch doctor
+```
+
+Verifica el estado de la instalación: revisa el binario, el archivo de estado interno, la integridad de cada archivo instalado en `~/.claude/`, y la presencia de archivos temporales o backups acumulados. Útil para diagnosticar problemas después de una interrupción durante `init` o `update`.
+
+El comando imprime un reporte con tres secciones:
+
+- **ESTADO**: binario en PATH y archivo de estado interno.
+- **ARCHIVOS**: cada archivo instalado, con aviso si fue modificado externamente o si falta.
+- **RESIDUOS**: archivos `.tmp.*` huérfanos y backups `.bak.*` acumulados.
+
+Cada línea con `WARN` o `ERROR` incluye el comando exacto para corregir el problema.
+
+Opciones de salida:
+
+```bash
+from-scratch doctor --json      # reporte en JSON estructurado
+from-scratch doctor --markdown  # reporte en Markdown
+```
+
+Códigos de salida: `0` si todo está OK, `1` si hay advertencias, `2` si hay errores.
+
 ### Ayuda
 
 ```bash
@@ -93,12 +118,14 @@ from-scratch --help
 from-scratch init --help
 from-scratch update --help
 from-scratch uninstall --help
+from-scratch doctor --help
 ```
 
 ## Comandos incluidos
 
 - `/new-project` — Crea un proyecto nuevo desde un template de stack.
 - `/from-scratch:sync-skills` — Re-sincroniza los skills de Claude Code desde el catálogo compartido de Despegar en un proyecto existente.
+- `/from-scratch:doctor` — Ejecuta el diagnóstico de la instalación desde dentro de Claude Code e interpreta el reporte en lenguaje natural.
 
 ## Stacks disponibles
 
@@ -157,6 +184,7 @@ Los archivos en `catalog/commands/<nombre>.md` siguen el formato estándar de Cl
     new-project.md              <- instalado por from-scratch
     from-scratch/
       sync-skills.md            <- instalado por from-scratch
+      doctor.md                 <- instalado por from-scratch
   stacks/
     java.md                     <- instalado por from-scratch
   from-scratch/
@@ -203,6 +231,16 @@ sudo rm ~/.local/bin/from-scratch
 **Los comandos no aparecen en Claude Code después de `init`**
 
 Reiniciá Claude Code. Los slash commands se cargan al arrancar; no se detectan en caliente.
+
+**No sabés si la instalación quedó en buen estado**
+
+Corré el diagnóstico para ver qué está bien y qué no:
+
+```bash
+from-scratch doctor
+```
+
+Cada línea con `WARN` o `ERROR` incluye el comando exacto para corregirlo.
 
 ## Desarrollo de la CLI
 

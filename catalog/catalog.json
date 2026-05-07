@@ -3,6 +3,7 @@
   "entries": [
     { "kind": "command", "source": "commands/new-project.md" },
     { "kind": "command", "source": "commands/from-scratch/sync-skills.md" },
+    { "kind": "command", "source": "commands/from-scratch/doctor.md" },
     { "kind": "stack", "source": "stacks/java.md" }
   ]
 }

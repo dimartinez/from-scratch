@@ -3,7 +3,7 @@ import argparse
 import sys
 
 
-SUBCOMMANDS = ["init", "update", "uninstall"]
+SUBCOMMANDS = ["init", "update", "uninstall", "doctor"]
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -38,6 +38,29 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "uninstall",
         help="Desinstala from-scratch y elimina todos los archivos instalados",
+    )
+
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Diagnostica el estado de la instalación en ~/.claude/",
+        description=(
+            "Verifica el estado de la instalación: binario, state file, "
+            "integridad de archivos y residuos. "
+            "Útil para diagnosticar problemas después de una sync incompleta."
+        ),
+    )
+    output_group = doctor_parser.add_mutually_exclusive_group()
+    output_group.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Imprime el reporte en formato JSON estructurado",
+    )
+    output_group.add_argument(
+        "--markdown",
+        action="store_true",
+        default=False,
+        help="Imprime el reporte en formato Markdown",
     )
 
     return parser
@@ -105,6 +128,10 @@ def main(args=None):
         if parsed.subcommand == "uninstall":
             from src.commands.uninstall import run_uninstall
             return run_uninstall()
+
+        if parsed.subcommand == "doctor":
+            from src.commands.doctor import run_doctor
+            return run_doctor(parsed)
 
         suggestion = _suggest_subcommand(parsed.subcommand)
         msg = f"Subcomando desconocido: '{parsed.subcommand}'"
